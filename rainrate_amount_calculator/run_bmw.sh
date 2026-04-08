@@ -1,4 +1,13 @@
 #!/bin/bash
+python rainrate_amount_calculator_ace_or_e3sm.py \
+        --in_file /pscratch/sd/m/mahf708/ACE2-EAMv3/picontrol_run/seg_0016/atmosphere/6h_surface_surface_precipitation_rate_predictions.nc \
+        --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_naser_picontrol.nc \
+        --precip_name surface_precipitation_rate
+
+      #--start_time 1001-01-01 \
+      #--end_time 1005-12-01 \
+
+exit
 
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/sample_0.nc \

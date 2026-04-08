@@ -84,4 +84,4 @@ plot_rainrate_pdfs('/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_p
                     'ACE2-EAMv3-AMIP',
                     'ACE2-pi-Naser',
                     'E3SMv3-AMIP',
-                    tropics_only=True)
+                    tropics_only=False)

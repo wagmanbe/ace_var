@@ -7,7 +7,7 @@ python rainrate_amount_calculator_ace_or_e3sm.py \
       #--start_time 1001-01-01 \
       #--end_time 1005-12-01 \
 
-exit
+
 
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/sample_0.nc \

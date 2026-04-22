@@ -12,10 +12,9 @@ python rainrate_amount_calculator_ace_or_e3sm.py \
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/sample_0.nc \
         --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_197601_198012.nc \
-      --start_time 1976-02-01 \
-      --end_time 1980-12-01 \
-      --precip_name surface_precipitation_rate
-
+        --precip_name surface_precipitation_rate
+      #--start_time 1976-02-01 \
+      #--end_time 1980-12-01 \
 
 
 python rainrate_amount_calculator_ace_or_e3sm.py \

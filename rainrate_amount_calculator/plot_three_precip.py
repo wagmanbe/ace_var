@@ -182,7 +182,7 @@ def plot_three_panel(
         vmin=-diff_abs_max,
         vmax=diff_abs_max,
     )
-    axs[2].set_title("Difference ACE2(AMIP – PI")
+    axs[2].set_title("Difference ACE2(AMIP – PI)")
     axs[2].coastlines(resolution="110m")
     axs[2].add_feature(cfeature.BORDERS, linewidth=0.5)
     axs[2].set_global()
@@ -211,7 +211,7 @@ def plot_three_panel(
         ax.yaxis.set_major_formatter(plt.FuncFormatter(format_lat))
 
     fig.suptitle(
-        "Total Precipitation Rate",
+        "Surface Precipitation Rate",
         fontsize=16,
     )
 

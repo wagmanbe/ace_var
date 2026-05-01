@@ -1,4 +1,13 @@
 #!/bin/bash
+
+# Training data for 1985-01
+python rainrate_amount_calculator_ace_or_e3sm.py \
+        --in_file /global/cfs/cdirs/e3sm/emulate/ace/e3smv3-amip/e3sm-v3-amip-180x360-gaussian/traindata/1985010100.nc \
+        --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_198501_training.nc \
+        --precip_name surface_precipitation_rate
+
+
+# ACE-PI run
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /pscratch/sd/m/mahf708/ACE2-EAMv3/picontrol_run/seg_0016/atmosphere/6h_surface_surface_precipitation_rate_predictions.nc \
         --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_naser_picontrol.nc \
@@ -8,7 +17,7 @@ python rainrate_amount_calculator_ace_or_e3sm.py \
       #--end_time 1005-12-01 \
 
 
-
+# ACE-AMIP
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/sample_1.nc \
         --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_197101_200012.nc \
@@ -17,7 +26,7 @@ python rainrate_amount_calculator_ace_or_e3sm.py \
         #--start_time 1976-02-01 \
         #--end_time 1980-12-01 \
 
-
+# AMIP. 
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /pscratch/sd/w/wagmanbe/rainrate_compare/v3.LR.amip_0101/post/atm/180x360_aave/ts/6-hourly/5yr/PRECT_197601_198012.nc \
         --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/v3.LR.amip_0101/post/atm/180x360_aave/ts/6-hourly/5yr/pdf_6hrly_197601_198012.nc \

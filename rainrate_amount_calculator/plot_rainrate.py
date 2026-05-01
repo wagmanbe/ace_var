@@ -9,9 +9,11 @@ def plot_rainrate_pdfs(
     file1,
     file2,
     file3,
+    file4,
     label1,
     label2,
     label3,
+    label4,
                     tropics_only=False,
                     land_only=False,
     ocean_only=False,
@@ -22,14 +24,17 @@ def plot_rainrate_pdfs(
     ds1 = xr.open_dataset(file1)
     ds2 = xr.open_dataset(file2)
     ds3 = xr.open_dataset(file3)
+    ds4 = xr.open_dataset(file4)
 
     hist1 = ds1["amount"]
     hist2 = ds2["amount"]
     hist3 = ds3["amount"]
+    hist4 = ds4["amount"]
 
     bin_edges1, bin_centers1 = ds1["edges"], ds1["centers"]
     bin_edges2, bin_centers2 = ds2["edges"], ds2["centers"]
     bin_edges3, bin_centers3 = ds3["edges"], ds3["centers"]
+    bin_edges4, bin_centers4 = ds4["edges"], ds4["centers"]
 
     suffix = ""
 
@@ -38,6 +43,7 @@ def plot_rainrate_pdfs(
         hist1 = hist1.where(np.abs(hist1.lat) <= max_lat, drop=True)
         hist2 = hist2.where(np.abs(hist2.lat) <= max_lat, drop=True)
         hist3 = hist3.where(np.abs(hist3.lat) <= max_lat, drop=True)
+        hist4 = hist4.where(np.abs(hist4.lat) <= max_lat, drop=True)
         suffix += "_tropics"
 
     land_mask_3d = None
@@ -55,6 +61,7 @@ def plot_rainrate_pdfs(
         hist1 = hist1.where(land_mask_3d)
         hist2 = hist2.where(land_mask_3d)
         hist3 = hist3.where(land_mask_3d)
+        hist4 = hist4.where(land_mask_3d)
 
     if specific_lat_lon:
         lat_spec=specific_lat_lon[0]
@@ -62,6 +69,7 @@ def plot_rainrate_pdfs(
         hist1 = hist1.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
         hist2 = hist2.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
         hist3 = hist3.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
+        hist4 = hist4.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
         suffix+=f'_lat{lat_spec}_lon{lon_spec}'
 
     if locate_anomaly:
@@ -110,11 +118,13 @@ def plot_rainrate_pdfs(
     weights1 = np.cos(np.deg2rad(hist1.lat))
     weights2 = np.cos(np.deg2rad(hist2.lat))
     weights3 = np.cos(np.deg2rad(hist3.lat))
+    weights4 = np.cos(np.deg2rad(hist4.lat))
 
     if not specific_lat_lon:
         hist1_mean = hist1.weighted(weights1).mean(("lon", "lat"))
         hist2_mean = hist2.weighted(weights2).mean(("lon", "lat"))
         hist3_mean = hist3.weighted(weights3).mean(("lon", "lat"))
+        hist4_mean = hist4.weighted(weights4).mean(("lon", "lat"))
     else:
         hist1_mean, hist2_mean, hist3_mean = hist1, hist2, hist3
 
@@ -122,6 +132,7 @@ def plot_rainrate_pdfs(
     plt.plot(bin_centers1, hist1_mean, label=label1)
     plt.plot(bin_centers2, hist2_mean, label=label2)
     plt.plot(bin_centers3, hist3_mean, label=label3)
+    plt.plot(bin_centers4, hist4_mean, label=label4)
     plt.xscale("log")
     plt.title("PDFs for rain rate")
     plt.xlabel("Rain rate mm/day")
@@ -134,13 +145,15 @@ def plot_rainrate_pdfs(
     ds1.close()
     ds2.close()
     ds3.close()
-
+    ds4.close()
 
 plot_rainrate_pdfs(
     "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_197101_200012.nc",
+    "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_198501_training.nc",
     "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_naser_picontrol.nc",
     "/pscratch/sd/w/wagmanbe/rainrate_compare/v3.LR.amip_0101/post/atm/180x360_aave/ts/6-hourly/5yr/pdf_6hrly_197601_198012.nc",
     "ACE2-EAMv3-AMIP",
+    "Training Data 1985-01",
     "ACE2-pi-Naser",
     "E3SMv3-AMIP",
     tropics_only=False,

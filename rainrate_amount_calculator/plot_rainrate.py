@@ -3,102 +3,98 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import pdb
 
 def plot_rainrate_pdfs(
-    file1,
-    file2,
-    file3,
-    file4,
-    label1,
-    label2,
-    label3,
-    label4,
-                    tropics_only=False,
-                    land_only=False,
+    files,          # list of file paths (e.g. [file1, file2, ..., file5])
+    labels,         # list of corresponding labels
+    tropics_only=False,
+    land_only=False,
     ocean_only=False,
     specific_lat_lon=False,
     landmask=None,
     locate_anomaly=False,
 ):
-    ds1 = xr.open_dataset(file1)
-    ds2 = xr.open_dataset(file2)
-    ds3 = xr.open_dataset(file3)
-    ds4 = xr.open_dataset(file4)
+    """
+    Plot PDFs of rain‑rate amount from one or more NetCDF files.
 
-    hist1 = ds1["amount"]
-    hist2 = ds2["amount"]
-    hist3 = ds3["amount"]
-    hist4 = ds4["amount"]
+    Parameters
+    ----------
+    files : list[str]
+        Paths to the NetCDF files (must be the same length as ``labels``).
+    labels : list[str]
+        Human‑readable legend entries for each file.
+    tropics_only, land_only, ocean_only, specific_lat_lon, landmask, locate_anomaly
+        Optional sub‑setting flags – behaviour unchanged from the original script.
+    """
+    if len(files) != len(labels):
+        raise ValueError("``files`` and ``labels`` must have the same length.")
 
-    bin_edges1, bin_centers1 = ds1["edges"], ds1["centers"]
-    bin_edges2, bin_centers2 = ds2["edges"], ds2["centers"]
-    bin_edges3, bin_centers3 = ds3["edges"], ds3["centers"]
-    bin_edges4, bin_centers4 = ds4["edges"], ds4["centers"]
+    # ------------------------------------------------------------------
+    # 1️⃣ Open all datasets and collect the needed variables
+    # ------------------------------------------------------------------
+    datasets   = [xr.open_dataset(f) for f in files]
+    histograms = [ds["amount"] for ds in datasets]
+
+    # Assume bin edges/centers are identical across files; grab from the first.
+    bin_edges, bin_centers = datasets[0]["edges"], datasets[0]["centers"]
 
     suffix = ""
 
+    # ------------------------------------------------------------------
+    # 2️⃣ Optional sub‑setting (tropics, land/ocean, specific point)
+    # ------------------------------------------------------------------
     if tropics_only:
         max_lat = 25.0
-        hist1 = hist1.where(np.abs(hist1.lat) <= max_lat, drop=True)
-        hist2 = hist2.where(np.abs(hist2.lat) <= max_lat, drop=True)
-        hist3 = hist3.where(np.abs(hist3.lat) <= max_lat, drop=True)
-        hist4 = hist4.where(np.abs(hist4.lat) <= max_lat, drop=True)
+        histograms = [
+            h.where(np.abs(h.lat) <= max_lat, drop=True) for h in histograms
+        ]
         suffix += "_tropics"
 
-    land_mask_3d = None
     if land_only or ocean_only:
         if landmask is None:
-            raise ValueError("landmask path must be provided when using land_only or ocean_only.")
+            raise ValueError(
+                "landmask path must be provided when using land_only or ocean_only."
+            )
         landfrac = xr.open_dataset(landmask)["LANDFRAC"]
-        if land_only:
-            land_mask = landfrac > 0.5
-            suffix += "_land"
-        else:
-            land_mask = landfrac < 0.5
-            suffix += "_ocean"
-        land_mask_3d = land_mask.broadcast_like(hist1)
-        hist1 = hist1.where(land_mask_3d)
-        hist2 = hist2.where(land_mask_3d)
-        hist3 = hist3.where(land_mask_3d)
-        hist4 = hist4.where(land_mask_3d)
+        land_mask = landfrac > 0.5 if land_only else landfrac < 0.5
+        suffix += "_land" if land_only else "_ocean"
+        # Broadcast mask to histogram shape and mask each histogram
+        mask_3d = land_mask.broadcast_like(histograms[0])
+        histograms = [h.where(mask_3d) for h in histograms]
 
     if specific_lat_lon:
-        lat_spec=specific_lat_lon[0]
-        lon_spec=specific_lat_lon[1]
-        hist1 = hist1.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
-        hist2 = hist2.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
-        hist3 = hist3.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
-        hist4 = hist4.sel(lat = lat_spec, lon = lon_spec, method='nearest',drop=False)
-        suffix+=f'_lat{lat_spec}_lon{lon_spec}'
+        lat_spec, lon_spec = specific_lat_lon
+        histograms = [
+            h.sel(lat=lat_spec, lon=lon_spec, method="nearest", drop=False)
+            for h in histograms
+        ]
+        suffix += f"_lat{lat_spec}_lon{lon_spec}"
 
+    # ------------------------------------------------------------------
+    # 3️⃣ (Optional) Locate anomaly – unchanged, uses only the first dataset
+    # ------------------------------------------------------------------
     if locate_anomaly:
-        # Identify centers within 0.8‑1.2 mm day⁻¹
-        centers_in_range = (bin_centers1 >= 0.8) & (bin_centers1 <= 1.2)
-        selected_centers = bin_centers1.where(centers_in_range, drop=True)
+        centers_in_range = (bin_centers >= 0.8) & (bin_centers <= 1.2)
+        selected_centers = bin_centers.where(centers_in_range, drop=True)
 
-        # Subset histogram to those centers
-        sub_hist1 = hist1.sel(centers=selected_centers)
-
-        # Build spatial mask: True where any selected bin > 0.5
-        mask = (sub_hist1 > 0.5).any("centers")
-        mask = mask.squeeze(drop=True)          # <<< **Important fix**
+        sub_hist = histograms[0].sel(centers=selected_centers)
+        mask = (sub_hist > 0.5).any("centers").squeeze(drop=True)
 
         proj = ccrs.PlateCarree()
         fig, ax = plt.subplots(figsize=(10, 5), subplot_kw=dict(projection=proj))
 
         extent = [
-            float(mask.lon.min()), float(mask.lon.max()),   # left, right
-            float(mask.lat.min()), float(mask.lat.max())    # bottom, top
+            float(mask.lon.min()), float(mask.lon.max()),
+            float(mask.lat.min()), float(mask.lat.max()),
         ]
 
         mask_img = ax.imshow(
             mask,
-            origin='lower',           # aligns the first row with the southernmost latitude
+            origin="lower",
             extent=extent,
             transform=proj,
             cmap="gray_r",
-            interpolation='nearest',
+            interpolation="nearest",
             rasterized=True,
         )
 
@@ -107,32 +103,37 @@ def plot_rainrate_pdfs(
         ax.set_global()
         ax.set_title("Spatial mask (0.8‑1.2 mm day⁻¹, value > 0.5)")
 
-        cbar = plt.colorbar(mask_img, ax=ax,
-                            orientation="vertical", pad=0.02,
-                            label="Mask (1=keep, 0=mask out)")
+        plt.colorbar(mask_img, ax=ax, orientation="vertical", pad=0.02,
+                     label="Mask (1=keep, 0=mask out)")
         plt.tight_layout()
         plt.savefig("mask1.png", dpi=250)
         plt.close(fig)
 
-    # Area weighting by cosine of latitude
-    weights1 = np.cos(np.deg2rad(hist1.lat))
-    weights2 = np.cos(np.deg2rad(hist2.lat))
-    weights3 = np.cos(np.deg2rad(hist3.lat))
-    weights4 = np.cos(np.deg2rad(hist4.lat))
+    # ------------------------------------------------------------------
+    # 4️⃣ Area‑weighting (cosine of latitude) and mean calculation
+    # ------------------------------------------------------------------
+    # Compute a weight array for each histogram (same shape, only latitude matters)
+    weights = [
+        np.cos(np.deg2rad(h.lat)) for h in histograms
+    ]
 
     if not specific_lat_lon:
-        hist1_mean = hist1.weighted(weights1).mean(("lon", "lat"))
-        hist2_mean = hist2.weighted(weights2).mean(("lon", "lat"))
-        hist3_mean = hist3.weighted(weights3).mean(("lon", "lat"))
-        hist4_mean = hist4.weighted(weights4).mean(("lon", "lat"))
+        means = [
+            h.weighted(w).mean(("lon", "lat"))
+            for h, w in zip(histograms, weights)
+        ]
     else:
-        hist1_mean, hist2_mean, hist3_mean = hist1, hist2, hist3
+        # When a single point is selected we just keep the raw values
+        means = histograms
 
+    # ------------------------------------------------------------------
+    # 5️⃣ Plot all PDFs
+    # ------------------------------------------------------------------
     plt.figure()
-    plt.plot(bin_centers1, hist1_mean, label=label1)
-    plt.plot(bin_centers2, hist2_mean, label=label2)
-    plt.plot(bin_centers3, hist3_mean, label=label3)
-    plt.plot(bin_centers4, hist4_mean, label=label4)
+    for mean, lbl in zip(means, labels):
+       # Convert to plain NumPy arrays to avoid x‑y dimension mismatches.
+       plt.plot(bin_centers.values, mean.values, label=lbl)
+
     plt.xscale("log")
     plt.title("PDFs for rain rate")
     plt.xlabel("Rain rate mm/day")
@@ -142,26 +143,37 @@ def plot_rainrate_pdfs(
     plt.savefig(f"rain_rate{suffix}_pdf.png")
     plt.close()
 
-    ds1.close()
-    ds2.close()
-    ds3.close()
-    ds4.close()
+    # ------------------------------------------------------------------
+    # 6️⃣ Clean up
+    # ------------------------------------------------------------------
+    for ds in datasets:
+        ds.close()
 
+
+# ----------------------------------------------------------------------
+# Example usage – now simply pass a list of five files / labels
+# ----------------------------------------------------------------------
 plot_rainrate_pdfs(
-    "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_197101_200012.nc",
-    "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_198501_training.nc",
-    "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_naser_picontrol.nc",
-    "/pscratch/sd/w/wagmanbe/rainrate_compare/v3.LR.amip_0101/post/atm/180x360_aave/ts/6-hourly/5yr/pdf_6hrly_197601_198012.nc",
-    "ACE2-EAMv3-AMIP",
-    "Training Data 1985-01",
-    "ACE2-pi-Naser",
-    "E3SMv3-AMIP",
+    files=[
+        "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_197101_200012.nc",
+        "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_198501_training.nc",
+        "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_naser_picontrol.nc",
+        "/pscratch/sd/w/wagmanbe/rainrate_compare/v3.LR.amip_0101/post/atm/180x360_aave/ts/6-hourly/5yr/pdf_6hrly_197601_198012.nc",
+        "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test1/surface_precipitation_rate/pdf_6hrly_sample0.nc",          
+        "/pscratch/sd/w/wagmanbe/rainrate_compare/amip.train_data.ace.19800101/surface_precipitation_rate/pdf_6hrly_sample0.nc"
+    ],
+    labels=[
+        "ACE2-EAMv3-AMIP",
+        "Training Data 1985-01",
+        "ACE2-pi-Naser",
+        "E3SMv3-AMIP",
+        "ACE2-EAMv3-AMIP-1971_frc_only",                  
+        "ACE2-EAMv3-AMIP-Ola"
+    ],
     tropics_only=False,
     land_only=False,
     ocean_only=False,
-    specific_lat_lon=False, #[-110,30],
+    specific_lat_lon=False,
     landmask="/global/cfs/cdirs/e3sm/emulate/ace/e3smv3-amip/e3sm-v3-amip-180x360-gaussian/landmask_e3sm_180x360_aave/landfrac_180x360_aave.nc",
     locate_anomaly=True,
 )
-
-

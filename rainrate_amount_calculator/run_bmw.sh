@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Olawales amip run. Directly from autoregressive file (since there's only 1 sample) 
+python rainrate_amount_calculator_ace_or_e3sm.py \
+        --in_file /pscratch/sd/o/olawale/E3SM_ace/inference/amip.train_data.ace.19800101/autoregressive_predictions.nc \
+        --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/amip.train_data.ace.19800101/surface_precipitation_rate/pdf_6hrly_sample0.nc \
+        --precip_name surface_precipitation_rate
+
+
+
+# Inf_test_1, which used their provided forcing data, 1971 only
+# Training data for 1985-01
+python rainrate_amount_calculator_ace_or_e3sm.py \
+        --in_file /global/cfs/cdirs/e3sm/emulate/ace/e3smv3-amip/e3sm-v3-amip-180x360-gaussian/shared_output/inf_test1/surface_precipitation_rate/sample_0.nc \
+        --out_file /pscratch/sd/w/wagmanbe/rainrate_compare/inf_test1/surface_precipitation_rate/pdf_6hrly_sample0.nc \
+        --precip_name surface_precipitation_rate
+
 # Training data for 1985-01
 python rainrate_amount_calculator_ace_or_e3sm.py \
         --in_file /global/cfs/cdirs/e3sm/emulate/ace/e3smv3-amip/e3sm-v3-amip-180x360-gaussian/traindata/1985010100.nc \

@@ -132,7 +132,7 @@ def plot_rainrate_pdfs(
     plt.figure()
     for mean, lbl in zip(means, labels):
        # Convert to plain NumPy arrays to avoid x‑y dimension mismatches.
-       plt.plot(bin_centers.values, mean.values, label=lbl)
+       plt.plot(bin_centers.values, mean.values, label=lbl, linewidth=2.0,  alpha=0.8 )
 
     plt.xscale("log")
     plt.title("PDFs for rain rate")
@@ -159,15 +159,15 @@ plot_rainrate_pdfs(
         "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_198501_training.nc",
         "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test4/surface_precipitation_rate/pdf_6hrly_naser_picontrol.nc",
         "/pscratch/sd/w/wagmanbe/rainrate_compare/v3.LR.amip_0101/post/atm/180x360_aave/ts/6-hourly/5yr/pdf_6hrly_197601_198012.nc",
-        "/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test1/surface_precipitation_rate/pdf_6hrly_sample0.nc",          
+        #"/pscratch/sd/w/wagmanbe/rainrate_compare/inf_test1/surface_precipitation_rate/pdf_6hrly_sample0.nc",          
         "/pscratch/sd/w/wagmanbe/rainrate_compare/amip.train_data.ace.19800101/surface_precipitation_rate/pdf_6hrly_sample0.nc"
     ],
     labels=[
-        "ACE2-EAMv3-AMIP",
+        "ACE2-EAMv3-AMIP-Wag",
         "Training Data 1985-01",
         "ACE2-pi-Naser",
         "E3SMv3-AMIP",
-        "ACE2-EAMv3-AMIP-1971_frc_only",                  
+        #"ACE2-EAMv3-AMIP-Wag-1971_frc_only",                  
         "ACE2-EAMv3-AMIP-Ola"
     ],
     tropics_only=False,

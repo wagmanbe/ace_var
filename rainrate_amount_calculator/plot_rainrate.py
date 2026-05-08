@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import pdb
 
 def plot_rainrate_pdfs(
     files,          # list of file paths (e.g. [file1, file2, ..., file5])
@@ -132,7 +133,10 @@ def plot_rainrate_pdfs(
     plt.figure()
     for mean, lbl in zip(means, labels):
        # Convert to plain NumPy arrays to avoid x‑y dimension mismatches.
-       plt.plot(bin_centers.values, mean.values, label=lbl, linewidth=2.0,  alpha=0.8 )
+       lw,ls=2.0,'-'
+       if 'Wag' in lbl:
+           lw,ls = 4.0,'--'
+       plt.plot(bin_centers.values, mean.values, label=lbl, linewidth=lw, linestyle=ls, alpha=0.8 )
 
     plt.xscale("log")
     plt.title("PDFs for rain rate")
